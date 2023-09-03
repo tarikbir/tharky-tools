@@ -9,7 +9,7 @@ namespace TTools.Editor
     [Icon(_icon)]
     public class TToolsToolbar : ToolbarOverlay
     {
-        public const string _icon = "Packages/com.tharky/Textures/logo.png";
+        public const string _icon = "Packages/com.tharky.tools/Textures/logo.png";
 
         public TToolsToolbar() : base(TToolsDropdown._id) { }
 
