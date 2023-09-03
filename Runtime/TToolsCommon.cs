@@ -1,5 +1,8 @@
-public static class TToolsCommon
+namespace TTools
 {
-    public const string PACKAGE_NAME = "com.tharky.tools";
-    public const string PACKAGE_PATH = "Packages/com.tharky.tools";
+    public static class TToolsCommon
+    {
+        public const string PACKAGE_NAME = "com.tharky.tools";
+        public const string PACKAGE_PATH = "Packages/com.tharky.tools";
+    }
 }
