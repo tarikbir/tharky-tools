@@ -22,10 +22,10 @@ namespace TTools.Editor
 
             public TToolsDropdown()
             {
-                text = "TTools";
+                text = string.Empty;
                 tooltip = "Tools from Tharky";
                 icon = AssetDatabase.LoadAssetAtPath<Texture2D>(TToolsToolbar._icon);
-
+                
                 clicked += ShowToolsMenu;
             }
 
@@ -40,9 +40,5 @@ namespace TTools.Editor
                 menu.ShowAsContext();
             }
         }
-    }
-    public class TToolsMenu : MonoBehaviour
-    {
-
     }
 }
