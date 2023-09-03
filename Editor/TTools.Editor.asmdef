@@ -2,7 +2,7 @@
     "name": "TTools.Editor",
     "rootNamespace": "TTools.Editor",
     "references": [
-        "TTools"
+        "GUID:a16732ad5f7eda44aae2649c3f77c98e"
     ],
     "includePlatforms": [
         "Editor"
