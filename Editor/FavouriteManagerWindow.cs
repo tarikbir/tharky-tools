@@ -21,14 +21,14 @@ namespace TTools.Editor
         private static FavouriteManagerWindow _instance = null;
         private Vector2 _scrollPos;
 
-        [MenuItem("Tharky/Windows/Favourite Manager")]
+        [MenuItem("Tharky/MyWindows/Favourite Manager", priority = 133)]
         public static void ShowWindow()
         {
             var window = GetWindow<FavouriteManagerWindow>("Favourite Manager");
             window.CheckForLocalPathVariable();
         }
 
-        [MenuItem("Assets/Tharky/Add - Remove Fav")]
+        [MenuItem("Assets/Tharky/Add - Remove Fav", priority = 133)]
         public static void AddToFavourites()
         {
             if (_isCurrentSelectedPathAlreadyContained)
@@ -46,7 +46,7 @@ namespace TTools.Editor
             }
         }
 
-        [MenuItem("Assets/Tharky/Add - Remove Fav", true)]
+        [MenuItem("Assets/Tharky/Add - Remove Fav", true, priority = 133)]
         public static bool ValidateMenuItem()
         {
             _currentFavouriteList = GetFavouriteList();

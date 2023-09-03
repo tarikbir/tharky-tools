@@ -29,7 +29,7 @@ namespace TTools.Editor
         private readonly GUIContent _failSceneIsAlreadyOpen = new("Scene is already open!");
         private readonly GUIContent _failSceneIsOnlyOpenScene = new("You can't close the last scene!");
 
-        [MenuItem("Tharky/Windows/Scene Manager")]
+        [MenuItem("Tharky/MyWindows/Scene Manager", priority = 133)]
         public static void ShowWindow()
         {
             SceneManagerWindow window = GetWindow<SceneManagerWindow>("Scene Manager");
