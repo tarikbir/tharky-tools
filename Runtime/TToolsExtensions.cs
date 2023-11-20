@@ -229,7 +229,7 @@ namespace TTools
     }
 
     /* By Nick Chapsas */
-        public ref struct CustomIntEnumerator
+    public ref struct CustomIntEnumerator
     {
         private int _current;
         private readonly int _end;
