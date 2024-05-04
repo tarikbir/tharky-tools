@@ -11,15 +11,17 @@ namespace TTools.Editor
     public class SceneManagerWindow : EditorWindow, IHasCustomMenu
     {
         public List<SceneAsset> Scenes = new();
-        private List<SceneAsset> _scenesToBeDeleted = new();
 
+        private List<SceneAsset> _scenesToBeDeleted = new();
         private SceneAsset _addedScene;
         private Vector2 _scrollPos;
+        private bool _showDebugInsteadOfNotifications = false;
 
-        private const float _notificationDuration = 0.3f;
+        private const float _notificationDuration = 0.25f;
 
         private readonly GUIContent _contextClearScenes = new("Clear Scenes");
         private readonly GUIContent _contextClearSavedData = new("Clear Saved Data");
+        private readonly GUIContent _contextShowAsDebugOption = new("Notifiers As Debug");
 
         private readonly GUIContent _successSceneLoaded = new("Scenes loaded.");
         private readonly GUIContent _successSceneAddedToList = new("Scene successfully added to the list.");
@@ -31,7 +33,7 @@ namespace TTools.Editor
         public static void ShowWindow()
         {
             SceneManagerWindow window = GetWindow<SceneManagerWindow>("Scene Manager");
-            window.minSize = new Vector2(300, 300);
+            window.minSize = new Vector2(310, 140);
         }
 
         private void OnGUI()
@@ -56,7 +58,7 @@ namespace TTools.Editor
                         }
                         else
                         {
-                            ShowNotification(_failSceneIsAlreadyOpen, _notificationDuration);
+                            Notify(_failSceneIsAlreadyOpen, _notificationDuration);
                         }
                     }
                     else if (Event.current.button == 1) // Right mouse click on a scene
@@ -77,7 +79,7 @@ namespace TTools.Editor
                             }
                             else
                             {
-                                ShowNotification(_failSceneIsOnlyOpenScene, _notificationDuration);
+                                Notify(_failSceneIsOnlyOpenScene, _notificationDuration);
                             }
                         }
                     }
@@ -101,11 +103,11 @@ namespace TTools.Editor
                 if (!Scenes.Contains(_addedScene))
                 {
                     Scenes.Add(_addedScene);
-                    ShowNotification(_successSceneAddedToList, _notificationDuration);
+                    Notify(_successSceneAddedToList, _notificationDuration);
                 }
                 else
                 {
-                    ShowNotification(_failSceneAlreadyAddedToList, _notificationDuration);
+                    Notify(_failSceneAlreadyAddedToList, _notificationDuration);
                 }
 
                 _addedScene = null;
@@ -142,7 +144,7 @@ namespace TTools.Editor
         {
             if (LoadScenes())
             {
-                ShowNotification(_successSceneLoaded, _notificationDuration);
+                Notify(_successSceneLoaded, _notificationDuration);
             }
         }
 
@@ -166,6 +168,13 @@ namespace TTools.Editor
         {
             if (Scenes != null) Scenes.Clear();
             else Scenes = new();
+        }
+        private void Notify(GUIContent message, float fadeout)
+        {
+            if (!_showDebugInsteadOfNotifications)
+                ShowNotification(message, fadeout);
+            else
+                Debug.Log(message.text);
         }
 
         private void SaveScenes()
@@ -243,6 +252,11 @@ namespace TTools.Editor
             menu.AddItem(_contextClearSavedData, false, () =>
             {
                 File.Delete(SaveFileName());
+            });
+            menu.AddSeparator(string.Empty);
+            menu.AddItem(_contextShowAsDebugOption, _showDebugInsteadOfNotifications, () =>
+            {
+                _showDebugInsteadOfNotifications = !_showDebugInsteadOfNotifications;
             });
         }
 
