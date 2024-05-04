@@ -1,7 +1,7 @@
 {
   "name": "com.tharky.tools",
   "displayName": "Tharky's Big Package",
-  "version": "0.0.2a",
+  "version": "0.0.3",
   "description": "Tharky has a big package, this is it",
   "dependencies": {
     "com.unity.settings-manager": "1.0.3"
