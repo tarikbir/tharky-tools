@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System;
 using UnityEditor.SceneManagement;
 using UnityEditor;
@@ -12,12 +11,11 @@ namespace TTools.Editor
     public class SceneManagerWindow : EditorWindow, IHasCustomMenu
     {
         public List<SceneAsset> Scenes = new();
-        public List<Scene> OpenScenes = new();
+        private List<SceneAsset> _scenesToBeDeleted = new();
 
         private SceneAsset _addedScene;
         private Vector2 _scrollPos;
 
-        private const string _sceneFolder = "Assets/Scenes/";
         private const float _notificationDuration = 0.3f;
 
         private readonly GUIContent _contextClearScenes = new("Clear Scenes");
@@ -29,7 +27,7 @@ namespace TTools.Editor
         private readonly GUIContent _failSceneIsAlreadyOpen = new("Scene is already open!");
         private readonly GUIContent _failSceneIsOnlyOpenScene = new("You can't close the last scene!");
 
-        [MenuItem("Tharky/MyWindows/Scene Manager", priority = 133)]
+        [MenuItem("Tharky/Tools/Scene Manager", priority = 133)]
         public static void ShowWindow()
         {
             SceneManagerWindow window = GetWindow<SceneManagerWindow>("Scene Manager");
@@ -38,28 +36,22 @@ namespace TTools.Editor
 
         private void OnGUI()
         {
-            CheckForSaveFile();
-
+            ValidateScenesList();
             /* Scrolling scene list and control */
             EditorGUILayout.BeginVertical();
             _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos, false, false);
-            SceneAsset sceneToBeDeleted = null;
             foreach (var scene in Scenes)
             {
                 if (GUILayout.Button(scene.name))
                 {
                     if (Event.current.button == 0) // Left mouse click on a scene
                     {
-                        if (EditorSceneManager.sceneCount > 1 || !OpenScenes.Any(s => s.name == scene.name)) // When multiple scenes are open or the current scene is not already open
+                        var openedScene = GetSceneIfAssetIsLoaded(scene);
+                        if (EditorSceneManager.sceneCount > 1 || !openedScene.IsValid()) // When multiple scenes are open or the current scene is not already open
                         {
                             if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
                             {
-                                var openedScene = EditorSceneManager.OpenScene(SceneFileName(scene.name), OpenSceneMode.Single);
-                                if (openedScene != null)
-                                {
-                                    OpenScenes.Clear();
-                                    OpenScenes.Add(openedScene);
-                                }
+                                EditorSceneManager.OpenScene(GetScenePath(scene), OpenSceneMode.Single);
                             }
                         }
                         else
@@ -69,23 +61,18 @@ namespace TTools.Editor
                     }
                     else if (Event.current.button == 1) // Right mouse click on a scene
                     {
-                        if (!OpenScenes.Any(s => s.name == scene.name)) // If the selected scene is not open, open it additively
+                        var openedScene = GetSceneIfAssetIsLoaded(scene);
+                        if (!openedScene.IsValid()) // If the selected scene is not open, open it additively
                         {
-                            var openedScene = EditorSceneManager.OpenScene(SceneFileName(scene.name), OpenSceneMode.Additive);
-                            if (!OpenScenes.Contains(openedScene))
-                            {
-                                OpenScenes.Add(openedScene);
-                            }
+                            EditorSceneManager.OpenScene(GetScenePath(scene), OpenSceneMode.Additive);
                         }
                         else // Or if the selected scene is open, close it
                         {
-                            var openedScene = OpenScenes.Where(s => s.name == scene.name).FirstOrDefault();
                             if (EditorSceneManager.sceneCount > 1)
                             {
                                 if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
                                 {
                                     EditorSceneManager.CloseScene(openedScene, true);
-                                    OpenScenes.Remove(openedScene);
                                 }
                             }
                             else
@@ -98,15 +85,10 @@ namespace TTools.Editor
                     {
                         if (EditorUtility.DisplayDialog($"Deleting {scene.name}", $"Are you sure you want to delete {scene.name} from the list?", "Yeah baby", "Nope"))
                         {
-                            sceneToBeDeleted = scene;
+                            _scenesToBeDeleted.Add(scene);
                         }
                     }
                 }
-            }
-
-            if (sceneToBeDeleted != null)
-            {
-                Scenes.Remove(sceneToBeDeleted);
             }
 
             GUILayout.FlexibleSpace();
@@ -133,20 +115,27 @@ namespace TTools.Editor
             EditorGUILayout.EndVertical();
         }
 
-        private void CheckForSaveFile()
+        private void ValidateScenesList()
         {
-            if (Scenes == null || Scenes.Any(s => Resources.InstanceIDToObject(s.GetInstanceID()) == null))
+            if (Scenes == null)
             {
-                if (EditorUtility.DisplayDialog("Saved scenes corrupted!",
-                    "Scene list save file cannot be read. File must be deleted to continue. This action cannot be undone.",
-                    "Fine, jeez",
-                    "Fuck off"))
-                {
-                    File.Delete(SaveFileName());
-                    Debug.LogWarning("Save file deleted.");
-                }
                 Scenes = new();
+                return;
             }
+
+            foreach (SceneAsset scene in Scenes)
+            {
+                if (scene == null)
+                {
+                    _scenesToBeDeleted.Add(scene);
+                }
+            }
+
+            foreach (SceneAsset scene in _scenesToBeDeleted)
+            {
+                Scenes.Remove(scene);
+            }
+            _scenesToBeDeleted.Clear();
         }
 
         protected void OnEnable()
@@ -155,17 +144,11 @@ namespace TTools.Editor
             {
                 ShowNotification(_successSceneLoaded, _notificationDuration);
             }
-
-            for (int i = 0; i < EditorSceneManager.sceneCount; i++)
-            {
-                OpenScenes.Add(EditorSceneManager.GetSceneAt(i));
-            }
         }
 
         protected void OnDisable()
         {
             SaveScenes();
-            OpenScenes.Clear();
         }
 
         protected void OnDestroy()
@@ -173,15 +156,24 @@ namespace TTools.Editor
             SaveScenes();
         }
 
-        private string SceneFileName(string name) => $"{_sceneFolder}{name}.unity";
         private string SaveFileName() => $"{Application.persistentDataPath}/editorSceneManagerData.json";
+        private string GetScenePath(SceneAsset scene) => AssetDatabase.GetAssetPath(scene.GetInstanceID());
+        private Scene GetSceneIfAssetIsLoaded(SceneAsset scene)
+        {
+            return EditorSceneManager.GetSceneByPath(GetScenePath(scene));
+        }
+        private void InitializeOrClearScenes()
+        {
+            if (Scenes != null) Scenes.Clear();
+            else Scenes = new();
+        }
 
         private void SaveScenes()
         {
             var savedPaths = new SavedPathsClass();
             foreach (var scene in Scenes)
             {
-                savedPaths.SavedPaths.Add(AssetDatabase.GetAssetPath(scene.GetInstanceID()));
+                savedPaths.SavedPaths.Add(GetScenePath(scene));
             }
 
             var data = EditorJsonUtility.ToJson(savedPaths);
@@ -195,10 +187,21 @@ namespace TTools.Editor
             {
                 SavedPathsClass savedPaths = new();
                 string data = File.ReadAllText(saveFileName);
-                EditorJsonUtility.FromJsonOverwrite(data, savedPaths);
+                try
+                {
+                    EditorJsonUtility.FromJsonOverwrite(data, savedPaths);
+                }
+                catch (Exception e)
+                {
+                    EditorUtility.DisplayDialog("Saved scenes corrupted!",
+                            "Scene list save file cannot be read. File must be deleted to continue. This action cannot be undone.\nReason: " +
+                            e.Message,
+                            "Ok");
+                    File.Delete(SaveFileName());
+                    Debug.LogWarning("Save file deleted.");
+                }
 
-                if (Scenes != null) Scenes.Clear();
-                else Scenes = new();
+                InitializeOrClearScenes();
 
                 if (savedPaths == null || savedPaths.SavedPaths.Count == 0)
                 {
@@ -218,7 +221,7 @@ namespace TTools.Editor
                     }
                     else
                     {
-                        Debug.LogWarning($"Cannot load a scene as no scene found at {path}!");
+                        Debug.LogWarning($"Cannot load a scene as no scene found at {path}! Saved scenes might be corrupted. It will fix itself automatically.");
                     }
                 }
 
@@ -226,9 +229,7 @@ namespace TTools.Editor
             }
 
             Debug.Log("No load file found for Scene Manager.");
-            if (Scenes != null) Scenes.Clear();
-            else Scenes = new();
-
+            InitializeOrClearScenes();
             return false;
         }
 
@@ -236,7 +237,7 @@ namespace TTools.Editor
         {
             menu.AddItem(_contextClearScenes, false, () =>
             {
-                Scenes.Clear();
+                InitializeOrClearScenes();
                 _addedScene = null;
             });
             menu.AddItem(_contextClearSavedData, false, () =>

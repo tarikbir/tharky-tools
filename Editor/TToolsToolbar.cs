@@ -34,8 +34,8 @@ namespace TTools.Editor
                 GenericMenu menu = new();
 
                 menu.AddItem(new GUIContent("Setup/Install Initial Packages"), false, () => PackageInstaller.InstallPackages());
-                menu.AddItem(new GUIContent("MyWindows/Favourite Manager"), false, () => FavouriteManagerWindow.ShowWindow());
-                menu.AddItem(new GUIContent("MyWindows/Scene Manager"), false, () => SceneManagerWindow.ShowWindow());
+                menu.AddItem(new GUIContent("Tools/Favourite Manager"), false, () => FavouriteManagerWindow.ShowWindow());
+                menu.AddItem(new GUIContent("Tools/Scene Manager"), false, () => SceneManagerWindow.ShowWindow());
 
                 menu.ShowAsContext();
             }

@@ -21,7 +21,7 @@ namespace TTools.Editor
         private static FavouriteManagerWindow _instance = null;
         private Vector2 _scrollPos;
 
-        [MenuItem("Tharky/MyWindows/Favourite Manager", priority = 133)]
+        [MenuItem("Tharky/Tools/Favourite Manager", priority = 133)]
         public static void ShowWindow()
         {
             var window = GetWindow<FavouriteManagerWindow>("Favourite Manager");
